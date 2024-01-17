@@ -1,90 +1,10 @@
-// import React, { useState, useEffect } from "react";
-// import { FaUser } from "react-icons/fa";
-// function Register() {
-//   const [formData, setFormData] = useState({
-//     name: "",
-//     email: "",
-//     password: "",
-//     password2: "",
-//   });
-
-//   const { name, email, password, password2 } = formData;
-
-//   const onChange = (e) => {
-//     setFormData((prevState) => ({
-//       ...prevState,
-//       [e.target.id]: e.target.value,
-//     }));
-//   };
-
-//   return (
-//     <>
-//       <section className="heading">
-//         <h1>
-//           <FaUser /> Register
-//         </h1>
-//         <p>Please create an account</p>
-//       </section>
-
-//       <section className="form">
-//         <form>
-//           <div className="form-group">
-//             <input
-//               type="text"
-//               className="form-control"
-//               id="name"
-//               value={name}
-//               placeholder="Enter your name"
-//               onChange={(e) => onChange(e)}
-//             />
-//           </div>
-
-//           <div className="form-group">
-//             <input
-//               type="email"
-//               className="form-control"
-//               id="email"
-//               value={email}
-//               placeholder="Enter your email"
-//               onChange={(e) => onChange(e)}
-//             />
-//           </div>
-
-//           <div className="form-group">
-//             <input
-//               type="password"
-//               className="form-control"
-//               id="password"
-//               value={password}
-//               placeholder="Enter password"
-//               onChange={(e) => onChange(e)}
-//             />
-//           </div>
-
-//           <div className="form-group">
-//             <input
-//               type="password"
-//               className="form-control"
-//               id="password2"
-//               value={password2}
-//               placeholder="Confirm password"
-//               onChange={(e) => onChange(e)}
-//             />
-//           </div>
-
-//           <div className="form-group">
-//             <button className="btn btn-block">Submit</button>
-//           </div>
-//         </form>
-//       </section>
-//     </>
-//   );
-// }
-
-// export default Register;
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaUser } from "react-icons/fa";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { register, reset } from "../features/auth/authSlice";
+import Spinner from "../components/Spinner";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -96,6 +16,23 @@ function Register() {
 
   const { name, email, password, password2 } = formData;
 
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const { user, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    if (isError) {
+      toast.error(message);
+    }
+    if (isSuccess || user) {
+      toast.success("Registration successful");
+      navigate("/");
+    }
+    dispatch(reset());
+  }, [user, isError, isSuccess, message, navigate, dispatch]);
   const onChange = (e) => {
     setFormData((prevState) => ({
       ...prevState,
@@ -109,10 +46,16 @@ function Register() {
     // Add your form validation logic here
     if (password !== password2) {
       // Handle password mismatch error
-      console.log("Passwords do not match");
+      toast.error("Passwords do not match");
     } else {
       // Perform the registration logic, e.g., send data to the server
-      console.log("Form submitted:", formData);
+      const userData = {
+        name,
+        email,
+        password,
+      };
+
+      dispatch(register(userData));
 
       // You can also reset the form after submission if needed
       setFormData({
@@ -124,6 +67,10 @@ function Register() {
     }
   };
 
+  if (isLoading) {
+    return <Spinner />;
+  }
+
   return (
     <div className="container mt-5">
       <div className="row justify-content-center">
@@ -133,7 +80,7 @@ function Register() {
               <h1 className="text-center">
                 <FaUser /> Register
               </h1>
-              <p className="text-center">Please create an account</p>
+              <p className="text-center text-muted">Please create an account</p>
 
               <form onSubmit={(e) => onSubmit(e)}>
                 <div className="mb-3">
@@ -181,7 +128,10 @@ function Register() {
                 </div>
 
                 <div className="mb-3">
-                  <button type="submit" className="btn btn-primary btn-block">
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-block w-100"
+                  >
                     Submit
                   </button>
                 </div>

@@ -1,13 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaSignInAlt } from "react-icons/fa";
+import Spinner from "../components/Spinner";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import { login, reset } from "../features/auth/authSlice";
 
 function Login() {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const { email, password } = formData;
+
+  const { user, isLoading, isError, isSuccess, message } = useSelector(
+    (state) => state.auth
+  );
+
+  useEffect(() => {
+    if (isError) {
+      toast.error(message);
+    }
+    if (isSuccess || user) {
+      toast.success("Login successful");
+      navigate("/");
+    }
+    dispatch(reset());
+  }, [user, isError, isSuccess, message, navigate, dispatch]);
 
   const onChange = (e) => {
     setFormData((prevState) => ({
@@ -19,21 +41,17 @@ function Login() {
   const onSubmit = (e) => {
     e.preventDefault();
 
-    // Add your form validation logic here
-    if (password !== "") {
-      // Handle password mismatch error
-      console.log("Passwords do not match");
-    } else {
-      // Perform the registration logic, e.g., send data to the server
-      console.log("Form submitted:", formData);
+    const userData = {
+      email,
+      password,
+    };
 
-      // You can also reset the form after submission if needed
-      setFormData({
-        email: "",
-        password: "",
-      });
-    }
+    dispatch(login(userData));
   };
+
+  if (isLoading) {
+    return <Spinner />;
+  }
 
   return (
     <div className="container mt-5">
@@ -72,7 +90,10 @@ function Login() {
                 </div>
 
                 <div className="mb-3">
-                  <button type="submit" className="btn btn-primary btn-block">
+                  <button
+                    type="submit"
+                    className="btn btn-primary btn-block w-100"
+                  >
                     Submit
                   </button>
                 </div>
